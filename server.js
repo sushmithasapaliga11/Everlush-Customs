@@ -40,16 +40,28 @@ const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
+const path = require('path');
 
 const app = express();
-const PORT = 3000;
+
+// ✅ IMPORTANT: Render PORT
+const PORT = process.env.PORT || 3000;
 
 /* =====================
    MIDDLEWARE
 ===================== */
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public'));
+
+// ✅ Serve static files from "public" folder
+app.use(express.static(path.join(__dirname, 'public')));
+
+/* =====================
+   ROOT ROUTE (VERY IMPORTANT)
+===================== */
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 /* =====================
    DATABASE
