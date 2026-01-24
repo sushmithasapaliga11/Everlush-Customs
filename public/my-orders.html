@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Orders – EVERLUSH CUSTOMS</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .order {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 15px;
+    }
+    button {
+      padding: 6px 10px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>EVERLUSH CUSTOMS 🌸</h1>
+<h3>View Your Orders</h3>
+
+<input id="phone" placeholder="Enter phone number"><br><br>
+<button onclick="loadOrders()">View Orders</button>
+
+<hr>
+
+<div id="orders"></div>
+
+<script>
+function loadOrders() {
+  const phone = document.getElementById("phone").value.trim();
+  const ordersDiv = document.getElementById("orders");
+  ordersDiv.innerHTML = "";
+
+  if (!phone) {
+    alert("Enter phone number");
+    return;
+  }
+
+  fetch(`/orders/${phone}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!Array.isArray(data) || data.length === 0) {
+        ordersDiv.innerHTML = "<p>No orders found</p>";
+        return;
+      }
+
+      data.forEach(o => {
+        const div = document.createElement("div");
+        div.className = "order";
+
+        div.innerHTML = `
+          <b>Order ID:</b> ${o.id}<br>
+          <b>Items:</b> ${o.items}<br>
+          <b>Total:</b> ₹${o.total}<br>
+          <b>Status:</b> ${o.status}<br>
+          <b>Cancel Request:</b> ${o.cancel_request}<br>
+          <b>Date:</b> ${o.created_at}<br>
+        `;
+
+        if (o.status === "Pending" && o.cancel_request === "No") {
+          const btn = document.createElement("button");
+          btn.textContent = "Request Cancel";
+          btn.onclick = () => requestCancel(o.id);
+          div.appendChild(btn);
+        }
+
+        ordersDiv.appendChild(div);
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      ordersDiv.innerHTML = "<p>Error loading orders</p>";
+    });
+}
+
+function requestCancel(orderId) {
+  fetch(`/order/cancel/${orderId}`, { method: "POST" })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert("Cancel request sent");
+        loadOrders();
+      } else {
+        alert("Unable to cancel order");
+      }
+    });
+}
+// Auto-fill phone number
+window.onload = function () {
+  const savedPhone = localStorage.getItem("phone");
+  if (savedPhone) {
+    document.getElementById("phone").value = savedPhone;
+    loadOrders(); // auto-load orders
+  }
+};
+
+</script>

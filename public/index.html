@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EVERLUSH CUSTOMS</title>
+  <style>
+    body { font-family: Arial; }
+    .item {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    button { padding: 8px 12px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<h1>EVERLUSH CUSTOMS 🌸</h1>
+<p>Handmade & Customized Gifts</p>
+
+<h3>Customer Details</h3>
+<input id="name" placeholder="Your Name" oninput="validateForm()">
+<input id="phone" placeholder="Phone Number" oninput="validateForm()">
+
+
+<h3>Order Items</h3>
+<div id="items"></div>
+
+<button onclick="addItem()">➕ Add Another Product</button><br><br>
+
+<!-- ORDER + VIEW BUTTONS -->
+<button id="placeBtn" onclick="placeOrder()" disabled>
+  🛒 Place Order
+</button>
+
+<button onclick="goToMyOrders()">📦 View My Orders</button>
+<button onclick="payUPI()">💳 Pay via GPay / PhonePe</button>
+
+<script>
+/* =====================
+   CONFIG
+===================== */
+const ADMIN_UPI = "sushmithaganiga30@okaxis";
+const ADMIN_WA  = "918147016408";
+
+let itemCount = 0;
+let lastOrderTotal = null;
+
+/* =====================
+   ADD PRODUCT
+===================== */
+function addItem() {
+  itemCount++;
+
+  const div = document.createElement('div');
+  div.className = "item";
+  div.innerHTML = `
+    <h4>Product ${itemCount}</h4>
+
+    <select onchange="handleChange(${itemCount})" id="product-${itemCount}">
+      <option value="">-- Select Product --</option>
+      <option>Flower Bouquet</option>
+      <option>Chocolate Bouquet</option>
+      <option>Chocolate Tower</option>
+      <option>Handmade Keychains</option>
+      <option>Bead Bracelets</option>
+      <option>Customized Coffee Cup</option>
+      <option>Customized Greeting Cards</option>
+    </select><br><br>
+
+    <select id="option-${itemCount}" style="display:none;"></select><br><br>
+    <input type="number" min="1" id="qty-${itemCount}"
+       placeholder="Quantity"
+       oninput="validateForm()">
+
+  `;
+  document.getElementById('items').appendChild(div);
+}
+
+/* =====================
+   OPTIONS
+===================== */
+function handleChange(i) {
+  const product = document.getElementById(`product-${i}`).value;
+  const option = document.getElementById(`option-${i}`);
+
+  option.style.display = "none";
+  option.innerHTML = "";
+
+  if (product === "Flower Bouquet" || product === "Chocolate Bouquet") {
+    option.style.display = "block";
+    option.innerHTML = `
+      <option value="">-- Select Size --</option>
+      <option>XL</option>
+      <option>L</option>
+      <option>M</option>
+      <option>XS</option>
+      <option>MINI</option>
+    `;
+    
+  }
+
+  if (product === "Chocolate Tower") {
+    option.style.display = "block";
+    option.innerHTML = `
+      <option value="">-- Select Layers --</option>
+      <option>1 Layer</option>
+      <option>2 Layers</option>
+      <option>3 Layers</option>
+    `;
+  }
+  validateForm();
+
+}
+
+/* =====================
+   PLACE ORDER
+===================== */
+function placeOrder() {
+  const name = document.getElementById('name').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+
+  if (!name || !phone) {
+    alert("Please enter name and phone number");
+    return;
+  }
+
+  let items = [];
+
+  for (let i = 1; i <= itemCount; i++) {
+    const product = document.getElementById(`product-${i}`)?.value;
+    const quantity = document.getElementById(`qty-${i}`)?.value;
+    const optionEl = document.getElementById(`option-${i}`);
+    const option =
+      optionEl && optionEl.style.display !== "none"
+        ? optionEl.value || "-"
+        : "-";
+
+    if (product && quantity) {
+      items.push({ product, option, quantity: Number(quantity) });
+    }
+  }
+
+  if (items.length === 0) {
+    alert("Please select at least one product");
+    return;
+  }
+
+  fetch('/order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, phone, items })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) {
+      alert(data.message);
+    } else {
+      lastOrderTotal = data.total;
+
+      alert(`Order placed successfully!
+Order ID: ${data.orderId}
+Total: ₹${data.total}`);
+
+      const itemText = items.map(
+        i => `• ${i.product} (${i.option}) x ${i.quantity}`
+      ).join('\n');
+
+      const adminMsg =
+`🌸 EVERLUSH CUSTOMS – NEW ORDER 🌸
+Order ID: ${data.orderId}
+Customer: ${name}
+Phone: ${phone}
+
+Items:
+${itemText}
+
+Total: ₹${data.total}`;
+
+      window.open(
+        `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(adminMsg)}`,
+        "_blank"
+      );
+    }
+  });
+}
+
+/* =====================
+   PAY VIA UPI
+===================== */
+function payUPI() {
+  if (!lastOrderTotal) {
+    alert("Please place order first");
+    return;
+  }
+
+  const upiURL =
+    `upi://pay?pa=${ADMIN_UPI}` +
+    `&pn=EVERLUSH%20CUSTOMS` +
+    `&am=${lastOrderTotal}` +
+    `&cu=INR`;
+
+  window.location.href = upiURL;
+}
+
+/* =====================
+   VIEW MY ORDERS
+===================== */
+function goToMyOrders() {
+  window.location.href = "/my-orders.html";
+}
+
+// Default item
+addItem();
+</script>
+
+
+<button id="placeBtn" onclick="placeOrder()" disabled>
+  🛒 Place Order
+</button>
+
+
+</body>
+</html>

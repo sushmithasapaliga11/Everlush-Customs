@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Orders – EVERLUSH CUSTOMS</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    h1 {
+      margin-bottom: 5px;
+    }
+    .order {
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+    }
+    button {
+      padding: 8px 12px;
+      margin-right: 8px;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .approve {
+      background: #4CAF50;
+      color: white;
+    }
+    .reject {
+      background: #f44336;
+      color: white;
+    }
+    .status {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>EVERLUSH CUSTOMS 🌸</h1>
+<h3>Admin Orders Panel</h3>
+
+<div id="orders">Loading orders...</div>
+
+<script>
+function loadAdminOrders() {
+  fetch('/admin/orders')
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById("orders");
+      container.innerHTML = "";
+
+      if (!Array.isArray(data) || data.length === 0) {
+        container.innerHTML = "<p>No orders available</p>";
+        return;
+      }
+
+      data.forEach(o => {
+        const div = document.createElement("div");
+        div.className = "order";
+
+        div.innerHTML = `
+          <b>Order ID:</b> ${o.id}<br>
+          <b>Phone:</b> ${o.phone}<br>
+          <b>Items:</b> ${o.items}<br>
+          <b>Total:</b> ₹${o.total}<br>
+          <b>Status:</b> <span class="status">${o.status}</span><br>
+          <b>Cancel Request:</b> ${o.cancel_request}<br>
+          <b>Date:</b> ${o.created_at}<br><br>
+        `;
+
+        if (o.cancel_request === "Yes" && o.status === "Pending") {
+          const approveBtn = document.createElement("button");
+          approveBtn.textContent = "Approve Cancel";
+          approveBtn.className = "approve";
+          approveBtn.onclick = () =>
+            handleCancel(o.id, o.phone, "approve");
+
+          const rejectBtn = document.createElement("button");
+          rejectBtn.textContent = "Reject Cancel";
+          rejectBtn.className = "reject";
+          rejectBtn.onclick = () =>
+            handleCancel(o.id, o.phone, "reject");
+
+          div.appendChild(approveBtn);
+          div.appendChild(rejectBtn);
+        }
+
+        container.appendChild(div);
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById("orders").innerHTML =
+        "<p>Error loading orders</p>";
+    });
+}
+
+function handleCancel(orderId, phone, action) {
+  fetch('/admin/cancel-action', {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orderId, action })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (!data.success) {
+      alert("Action failed");
+      return;
+    }
+
+    alert("Order updated successfully");
+
+    if (action === "approve") {
+      const msg =
+`🌸 EVERLUSH CUSTOMS 🌸
+
+Your order (ID: ${orderId}) has been cancelled successfully.
+
+If payment was already made, refund details will be shared soon.
+
+Thank you for choosing Everlush 💖`;
+
+      window.open(
+        `https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`,
+        "_blank"
+      );
+    }
+
+    loadAdminOrders();
+  });
+}
+
+// Initial load
+loadAdminOrders();
+</script>
+
+</body>
+</html>
