@@ -57,6 +57,13 @@ export default function Index() {
         subtotal: getPrice(r) * r.quantity,
       }));
       const res = await placeOrder({ name, phone, items, total });
+
+      // Auto-notify admin via WhatsApp
+      const itemsText = items.map((i) => `${i.product}${i.option && i.option !== "-" ? ` (${i.option})` : ""} x${i.quantity} = ₹${i.subtotal}`).join("\n");
+      const thankYouMsg = encodeURIComponent(`🌸 *Thank you for choosing EVERLUSH CUSTOMS, ${name}!*\n\nYour order has been placed successfully! 🎉\n\nOrder #${res.orderId}\n\n${itemsText}\n\n*Total: ₹${total}*\n\nWe'll get in touch with you soon! 💕`);
+      const adminMsg = encodeURIComponent(`🛍️ *New Order Received!*\n\nOrder #${res.orderId}\nCustomer: ${name}\nPhone: ${phone}\n\n${itemsText}\n\n*Total: ₹${total}*\n\n👇 Send thank you to customer:\nhttps://wa.me/91${phone}?text=${thankYouMsg}`);
+      window.open(`https://wa.me/918147016408?text=${adminMsg}`, "_blank");
+
       setSuccess({ orderId: res.orderId, total, items });
     } catch (e: unknown) {
       toast({ title: "Error", description: e instanceof Error ? e.message : "Failed to place order", variant: "destructive" });
@@ -73,6 +80,7 @@ export default function Index() {
           total={success.total}
           items={success.items}
           customerName={name}
+          customerPhone={phone}
           onNewOrder={() => { setSuccess(null); setName(""); setPhone(""); setRows([emptyRow()]); }}
         />
       </div>
@@ -82,7 +90,7 @@ export default function Index() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-primary sm:text-4xl">EVERLUSH CUSTOMS 🌸</h1>
+        <h1 className="text-3xl font-bold text-primary sm:text-4xl">EVERLUSH CUSTOMS 🌿</h1>
         <p className="mt-2 text-muted-foreground">Handmade gifts crafted with love</p>
       </div>
 
@@ -137,7 +145,7 @@ export default function Index() {
           </div>
 
           <Button onClick={handleSubmit} disabled={!isValid || loading} className="w-full text-lg py-6">
-            {loading ? "Placing Order..." : "Place Order 🌸"}
+            {loading ? "Placing Order..." : "Place Order 🌿"}
           </Button>
         </CardContent>
       </Card>

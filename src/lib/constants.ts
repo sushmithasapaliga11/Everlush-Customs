@@ -56,9 +56,9 @@ export const PRODUCTS: Product[] = [
   },
 ];
 
-export const WHATSAPP_NUMBER = "919999999999"; // Replace with actual number
-export const UPI_ID = "example@upi"; // Replace with actual UPI ID
-export const ADMIN_PASSWORD = "everlush2024"; // Change this!
+export const WHATSAPP_NUMBER = "918147016408"; // Replace with actual number
+export const UPI_ID = "8147016408@ybl"; // Replace with actual UPI ID
+export const ADMIN_PASSWORD = "everlush2026"; // Change this!
 
 // Google Apps Script Web App URL - user must deploy and paste URL here
-export const GOOGLE_SCRIPT_URL = "";
+export const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_Y-TP6E30tR3OeDf4CUNlxfWM1o7WpIvl27x10MN7XfJbtesoxTjENq3e1IRif3NM/exec";

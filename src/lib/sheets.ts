@@ -19,9 +19,71 @@ export interface Order {
   createdAt: string;
 }
 
+const STORAGE_KEY = "everlush_orders";
+
+function mockScriptFallback(action: string, data?: Record<string, any>): Promise<any> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      let orders: Order[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      
+      switch (action) {
+        case "placeOrder": {
+          const newOrder: Order = {
+            ...data?.order,
+            id: Math.floor(Math.random() * 1000000), // Random ID
+            status: "Pending",
+            cancelRequest: "No",
+            createdAt: new Date().toLocaleString(),
+          };
+          orders.push(newOrder);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+          resolve({ orderId: newOrder.id });
+          break;
+        }
+        case "getOrders": {
+          const phone = data?.phone;
+          const filtered = orders.filter(o => o.phone === phone);
+          resolve({ orders: filtered });
+          break;
+        }
+        case "getAllOrders": {
+          resolve({ orders });
+          break;
+        }
+        case "requestCancel": {
+          const orderId = data?.orderId;
+          orders = orders.map(o => o.id === orderId ? { ...o, cancelRequest: "Yes" } : o);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+          resolve({ success: true });
+          break;
+        }
+        case "updateCancel": {
+          const { orderId, action: cancelAction } = data as any;
+          orders = orders.map(o => {
+            if (o.id === orderId) {
+               return { 
+                  ...o, 
+                  cancelRequest: cancelAction,
+                  status: cancelAction === "Approved" ? "Cancelled" : o.status 
+               };
+            }
+            return o;
+          });
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+          resolve({ success: true });
+          break;
+        }
+        default:
+          resolve({ error: "Unknown action" });
+      }
+    }, 500); // simulate network delay
+  });
+}
+
 async function callScript(action: string, data?: Record<string, unknown>) {
   if (!GOOGLE_SCRIPT_URL) {
-    throw new Error("Google Apps Script URL not configured. Please set GOOGLE_SCRIPT_URL in src/lib/constants.ts");
+    console.warn("Google Apps Script URL not configured. Using localStorage fallback.");
+    return mockScriptFallback(action, data);
   }
   const res = await fetch(GOOGLE_SCRIPT_URL, {
     method: "POST",

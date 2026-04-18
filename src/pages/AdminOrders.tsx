@@ -113,9 +113,14 @@ export default function AdminOrders() {
                       </Button>
                     </>
                   )}
-                  <Button size="sm" variant="ghost" asChild>
+                  <Button size="sm" variant="ghost" asChild title="Chat with customer">
                     <a href={`https://wa.me/91${order.phone}`} target="_blank" rel="noopener noreferrer">
                       <MessageCircle className="h-4 w-4" />
+                    </a>
+                  </Button>
+                  <Button size="sm" variant="outline" className="gap-1 text-primary border-primary" asChild title="Send Order Details & Thank You Message">
+                    <a href={`https://wa.me/91${order.phone}?text=${encodeURIComponent(`🌸 *Thank you for choosing EVERLUSH CUSTOMS!*\n\nHere are your order details:\nOrder #${order.id}\n\n${order.items.map((i) => `${i.product}${i.option !== "-" ? ` (${i.option})` : ""} x${i.quantity} = ₹${i.subtotal}`).join("\n")}\n\n*Total: ₹${order.total}*`)}`} target="_blank" rel="noopener noreferrer">
+                      <CheckCircle className="h-4 w-4" /> Send Details
                     </a>
                   </Button>
                 </div>

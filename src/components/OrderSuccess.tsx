@@ -9,15 +9,19 @@ interface OrderSuccessProps {
   total: number;
   items: OrderItem[];
   customerName: string;
+  customerPhone: string; // ADD THIS
   onNewOrder: () => void;
 }
 
-export default function OrderSuccess({ orderId, total, items, customerName, onNewOrder }: OrderSuccessProps) {
+export default function OrderSuccess({ orderId, total, items, customerName, customerPhone, onNewOrder }: OrderSuccessProps) {
   const itemsText = items.map((i) => `${i.product}${i.option ? ` (${i.option})` : ""} x${i.quantity} = ₹${i.subtotal}`).join("\n");
-  const whatsappMsg = encodeURIComponent(
-    `🌸 *New Order from EVERLUSH CUSTOMS*\n\nOrder #${orderId}\nCustomer: ${customerName}\n\n${itemsText}\n\n*Total: ₹${total}*`
+
+  // 1. Message YOU (admin) receive — with button to reply to customer
+  const adminMsg = encodeURIComponent(
+    `🛍️ *New Order Received!*\n\nOrder #${orderId}\nCustomer: ${customerName}\nPhone: ${customerPhone}\n\n${itemsText}\n\n*Total: ₹${total}*\n\n👇 Click below to send thank you to customer:\nhttps://wa.me/91${customerPhone}?text=${encodeURIComponent(`🌸 *Thank you for choosing EVERLUSH CUSTOMS, ${customerName}!*\n\nYour order has been placed successfully! 🎉\n\nOrder #${orderId}\n\n${itemsText}\n\n*Total: ₹${total}*\n\nWe'll get in touch with you soon! 💕`)}`
   );
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMsg}`;
+  const adminWhatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${adminMsg}`;
+
   const upiUrl = `upi://pay?pa=${UPI_ID}&pn=Everlush%20Customs&am=${total}&cu=INR&tn=Order%20${orderId}`;
 
   return (
@@ -35,14 +39,22 @@ export default function OrderSuccess({ orderId, total, items, customerName, onNe
           <p className="text-lg font-semibold mt-1">Total: ₹{total}</p>
         </div>
 
+        <p className="text-sm text-muted-foreground">
+          We will contact you on <span className="font-semibold text-foreground">+91 {customerPhone}</span> shortly! 🌸
+        </p>
+
         <div className="space-y-2">
+          {/* This button is for YOU (admin) - notify yourself and reply to customer */}
           <Button asChild className="w-full gap-2 bg-success hover:bg-success/90 text-success-foreground">
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-              <MessageCircle className="h-4 w-4" /> Send via WhatsApp
+            <a href={adminWhatsappUrl} target="_blank" rel="noopener noreferrer">
+              <MessageCircle className="h-4 w-4" /> Notify Admin via WhatsApp
             </a>
           </Button>
 
-          <Button asChild variant="outline" className="w-full gap-2">
+          <Button asChild variant="outline" className="w-full gap-2 border-primary text-primary" onClick={() => {
+            // Attempt to open the UPI link directly
+            window.location.href = upiUrl;
+          }}>
             <a href={upiUrl}>
               <Smartphone className="h-4 w-4" /> Pay ₹{total} via UPI
             </a>
